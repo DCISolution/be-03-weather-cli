@@ -74,59 +74,86 @@ function displayWeather(response) {
 
     const { name, country } = location
     // Check if the API "corrected" the requested city name
-    if (city !== name) {
+    if (city.toLowerCase() !== name.toLowerCase()) {
         console.log(red("Error: "), `No weather data for "${city}" found. Perhaps you meant ${name}? Please check your spelling.`);
         process.exit(9) // Invalid argument
     }
 
-    // Header for today's weather and for a forecust
-    console.log(white.inverse("\n  @@@@@@@@@@@@@@@@@@@  "));
-    console.log(blue.inverse("  @ WEATHER PROGRAM @  "));
-    console.log(white.inverse("  @@@@@@@@@@@@@@@@@@@  "));
+    showHeader()
 
     // Select the right temperature scale
     const temp = useF
-                ? current.temp_f + "°F"
-                : current.temp_c + "°C"
+               ? current.temp_f + "°F"
+               : current.temp_c + "°C"
 
     if (forecast) {
-      // Show current temperature and N days forecast
-      // With a free plan, you only get a maximum of 3 days'
-      // forecast
-        const { forecastday } = forecast
-        const count = [,, "TWO", "THREE", "FOUR", "FIVE"][forecastday.length]
-
-        console.log(
-            "\nIn",
-            green(`${name}`),
-            "the current temperature is:",
-            yellow(temp),
-        );
-        console.log(
-            blue("\n* THE WEATHER FORECAST FOR",
-            green(`${name.toUpperCase()}`),
-            `FOR THE NEXT ${count} DAYS *\n`)
-        );
-
-        forecastday.map(e => {
-            const { day, date, astro } = e
-            const { avgtemp_c, avgtemp_f, condition } = day
-            const temp = useF
-                ? avgtemp_f + "°F"
-                : avgtemp_c + "°C"
-            const { sunrise, sunset } = astro
-            console.log("Day:", red(date));
-            console.log("Average Temperature:", yellow(temp));
-            console.log("Weather Conditions:", yellow(`${condition.text}`));
-            console.log("Sunrise:", yellow(sunrise), "\n", "Sunset:", yellow(sunset), "\n");
-        });
+        showForecast( name, country, temp, forecast )
 
     } else { // Just today's weather
-        const conditions = current.condition.text
-        console.log("\nIt is now", green(`${temp}`), "in", yellow(`${name}, ${country}`));
-        console.log(
-            "The current weather conditions are :",
-            rainbow(`"${conditions}"\n`)
-        );
+        showTodaysWeather(
+            name,
+            country,
+            temp,
+            current.condition.text
+        )
     }
+}
+
+/**
+ * Header both for today's weather and for a forecast
+ */
+function showHeader() {
+    console.log(
+        white.inverse   ("\n ********************* \n * "),
+        "WEATHER PROGRAM",
+        white.inverse(" * \n ********************* ")
+    );
+}
+
+
+
+/**
+ * Show current temperature and N days forecast
+ * With a free plan, you only get a maximum of 3 days'
+ * forecast
+ */
+function showForecast( name, country, temp, forecast ) {
+    const { forecastday } = forecast
+    const count = [,, "TWO", "THREE", "FOUR", "FIVE"][forecastday.length]
+
+    console.log(
+        "\nIn",
+        green(`${name}`),
+        "the current temperature is:",
+        yellow(temp),
+    );
+    console.log(
+        blue("\n* THE WEATHER FORECAST FOR",
+        green(`${name.toUpperCase()}, ${country.toUpperCase()}`),
+        `FOR THE NEXT ${count} DAYS *\n`)
+    )
+
+    forecastday.map(showForecastForADay)
+}
+
+
+function showForecastForADay({ day, date, astro }) {
+    const { avgtemp_c, avgtemp_f, condition } = day
+    const temp = useF
+        ? avgtemp_f + "°F"
+        : avgtemp_c + "°C"
+    const { sunrise, sunset } = astro
+    console.log("Day:", red(date));
+    console.log("Average Temperature:", yellow(temp));
+    console.log("Weather Conditions:", yellow(`${condition.text}`));
+    console.log("Sunrise:", yellow(sunrise), "\n", "Sunset:", yellow(sunset), "\n");
+}
+
+
+function showTodaysWeather( name, country, temp, conditions ) {
+    console.log("\nIt is now", green(`${temp}`), "in", yellow(`${name}, ${country}`));
+    console.log(
+        "The current weather conditions are :",
+        rainbow(`"${conditions}"\n`)
+    );
 }
